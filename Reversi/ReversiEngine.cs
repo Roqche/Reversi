@@ -146,6 +146,61 @@ namespace Reversi
                     fieldNumbers[board[i, j]]++;
         }
 
+        private bool CanCurrentPlayerMakeMove()
+        {
+            int numberCorrectFields = 0;
+            for (int i = 0; i < BoardWidth; ++i)
+                for (int j = 0; j < BoardHeight; ++j)
+                {
+                    if (board[i, j] == 0 && PutStone(i, j, true) > 0)
+                        numberCorrectFields++;
+                }
+
+            return numberCorrectFields > 0;
+        }
+
+        public void Pass()
+        {
+            if (CanCurrentPlayerMakeMove())
+                throw new Exception("Gracz nie może oddać ruchu, jeżeli wykonanie ruchu jest możliwe");
+
+            ChangeCurrentPlayer();
+        }
+
+        public enum SituationOnBoard
+        {
+            RuchJestMożliwy,
+            BieżącyGraczNieMożeWykonaćRuchu,
+            ObajGraczeNieMogąWykonaćRuchu,
+            WszystkiePolaPlanszyZajęte
+        }
+
+        public SituationOnBoard InspectSituationOnBoard()
+        {
+            if (NumberOfEmptyFields == 0) return SituationOnBoard.WszystkiePolaPlanszyZajęte;
+
+            bool canMakeMove = CanCurrentPlayerMakeMove();
+            if (canMakeMove) return SituationOnBoard.RuchJestMożliwy;
+            else
+            {
+                ChangeCurrentPlayer();
+                bool canOpponentMakeMove = CanCurrentPlayerMakeMove();
+                ChangeCurrentPlayer();
+                if (canOpponentMakeMove)
+                    return SituationOnBoard.BieżącyGraczNieMożeWykonaćRuchu;
+                else return SituationOnBoard.ObajGraczeNieMogąWykonaćRuchu;
+            }
+        }
+
+        public int PlayerNumberWithAdvantage
+        {
+            get
+            {
+                if (NumberOfPlayer1Fields == NumberOfPlayer2Fields) return 0;
+                else return (NumberOfPlayer1Fields > NumberOfPlayer2Fields) ? 1 : 2;
+            }
+        }
+
         public int NumberOfEmptyFields { get => fieldNumbers[0]; }
         public int NumberOfPlayer1Fields { get => fieldNumbers[1]; }
         public int NumberOfPlayer2Fields { get => fieldNumbers[2]; }
