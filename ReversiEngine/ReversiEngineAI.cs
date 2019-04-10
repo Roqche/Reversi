@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Reversi
 {
-    public class ReversiEngineAI : ReversiEngine
+    public class ReversiEngineAI : ReversiEngine, IEngineGameForOnePlayer
     {
         public  ReversiEngineAI(int playerNumberStarting, int boardWidth = 8, int boardHeight = 8):base(playerNumberStarting, boardWidth, boardHeight)
         {

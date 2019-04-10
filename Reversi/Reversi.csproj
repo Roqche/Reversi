@@ -55,9 +55,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="BoardForTwoPlayers.xaml.cs">
+      <DependentUpon>BoardForTwoPlayers.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ColorMixing.cs" />
-    <Compile Include="ReversiEngine.cs" />
-    <Compile Include="ReversiEngineAI.cs" />
+    <Page Include="BoardForTwoPlayers.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -96,6 +101,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BoardGames\BoardGames.csproj">
+      <Project>{3ec4c41a-95b9-46f1-955a-8205e26eb0a4}</Project>
+      <Name>BoardGames</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ReversiEngine\ReversiEngine.csproj">
+      <Project>{b0544f88-41a8-4b9d-b99b-46524c018f7a}</Project>
+      <Name>ReversiEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

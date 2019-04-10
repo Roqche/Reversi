@@ -1,18 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
+using static Reversi.BoardForTwoPlayers;
 
 namespace Reversi
 {
@@ -22,29 +14,20 @@ namespace Reversi
     public partial class MainWindow : Window
     {
         private ReversiEngineAI engine = new ReversiEngineAI(1, 8, 8);
-
-        private SolidColorBrush[] colors = { Brushes.Ivory, Brushes.Green, Brushes.Sienna };
-        string[] playersNames = { "", "zielony", "brązowy" };
-
-        private Button[,] board;
-
-        private bool BoardInitialized => board[engine.BoardWidth - 1, engine.BoardHeight - 1] != null;
-
         private bool _gameAgainstComputer = true;
         private DispatcherTimer timer;
 
+        string[] playersNames = { "", "zielony", "brązowy" };
+
         private void AgreeBoardContent()
         {
-            if (!BoardInitialized) return;
-
             for (int i = 0; i < engine.BoardWidth; i++)
                 for (int j = 0; j < engine.BoardHeight; j++)
                 {
-                    board[i, j].Background = colors[engine.DownloadFieldCondition(i, j)];
-                    board[i, j].Content = engine.DownloadFieldCondition(i, j).ToString();
+                    boardControl.MarkMove(new FieldCoordinates(i, j), (FieldCondition)engine.DownloadFieldCondition(i, j));
                 }
 
-            buttonPlayerColor.Background = colors[engine.PlayerNumberMakingNextMove];
+            buttonPlayerColor.Background = boardControl.BrushForCondition((FieldCondition)engine.PlayerNumberMakingNextMove);
             numberFieldGreen.Text = engine.NumberOfPlayer1Fields.ToString();
             numberFieldBrown.Text = engine.NumberOfPlayer2Fields.ToString();
         }
@@ -60,12 +43,10 @@ namespace Reversi
             return "" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[horizontal] + "1234567890"[vertical];
         }
 
-        void ClickingBoardField(object sender, RoutedEventArgs e)
+        private void boardControl_ClickingField(object sender, BoardEventArgs e)
         {
-            Button clickedButton = sender as Button;
-            FieldCoordinate coordinate = (FieldCoordinate)clickedButton.Tag;
-            int clickedHorizontal = coordinate.Horizontal;
-            int clickedVertical = coordinate.Vertical;
+            int clickedHorizontal = e.FieldCoordinates.Horizontal;
+            int clickedVertical = e.FieldCoordinates.Vertical;
 
             //doing movement
             int rememberedPlayerNumber = engine.PlayerNumberMakingNextMove;
@@ -86,20 +67,20 @@ namespace Reversi
             }
 
             //special situation
-            ReversiEngine.SituationOnBoard situationOnBoard = engine.InspectSituationOnBoard();
+            SituationOnBoard situationOnBoard = engine.InspectSituationOnBoard();
             bool gameOver = false;
             switch (situationOnBoard)
             {
-                case ReversiEngine.SituationOnBoard.BieżącyGraczNieMożeWykonaćRuchu:
+                case SituationOnBoard.BieżącyGraczNieMożeWykonaćRuchu:
                     MessageBox.Show("Gracz " + playersNames[engine.PlayerNumberMakingNextMove] + " zmuszony jest do oddania ruchu");
                     engine.Pass();
                     AgreeBoardContent();
                     break;
-                case ReversiEngine.SituationOnBoard.ObajGraczeNieMogąWykonaćRuchu:
+                case SituationOnBoard.ObajGraczeNieMogąWykonaćRuchu:
                     MessageBox.Show("Obaj gracze nie mogą wykonać ruchu");
                     gameOver = true;
                     break;
-                case ReversiEngine.SituationOnBoard.WszystkiePolaPlanszyZajęte:
+                case SituationOnBoard.WszystkiePolaPlanszyZajęte:
                     gameOver = true;
                     break;
             }
@@ -115,7 +96,7 @@ namespace Reversi
                 }
                 else
                 {
-                    boardGrid.IsEnabled = false;
+                    boardControl.IsEnabled = false;
                     buttonPlayerColor.IsEnabled = false;
                 }
             }
@@ -140,13 +121,13 @@ namespace Reversi
             listOfMoveGreen.Items.Clear();
             listOfMoveBrown.Items.Clear();
             AgreeBoardContent();
-            boardGrid.IsEnabled = true;
+            boardControl.IsEnabled = true;
             buttonPlayerColor.IsEnabled = true;
         }
 
-        private FieldCoordinate? DetermineTheBestMove()
+        private FieldCoordinates? DetermineTheBestMove()
         {
-            if (!boardGrid.IsEnabled) return null;
+            if (!boardControl.IsEnabled) return null;
 
             if (engine.NumberOfEmptyFields == 0)
             {
@@ -158,7 +139,7 @@ namespace Reversi
             {
                 int horizontal, vertical;
                 engine.SuggestTheBestMove(out horizontal, out vertical);
-                return new FieldCoordinate() { Horizontal = horizontal, Vertical = vertical };
+                return new FieldCoordinates() { Horizontal = horizontal, Vertical = vertical };
             }
             catch
             {
@@ -169,39 +150,16 @@ namespace Reversi
 
         private void MarkTheBestMove()
         {
-            FieldCoordinate? fieldCoordinate = DetermineTheBestMove();
+            FieldCoordinates? fieldCoordinate = DetermineTheBestMove();
             if (fieldCoordinate.HasValue)
             {
-                SolidColorBrush colorPrompt = colors[engine.PlayerNumberMakingNextMove].Lerp(colors[0], 0.5f);
-                board[fieldCoordinate.Value.Horizontal, fieldCoordinate.Value.Vertical].Background = colorPrompt;
+                boardControl.MarkPrompt(fieldCoordinate.Value, (FieldCondition)engine.PlayerNumberMakingNextMove);
             }
         }
 
         public MainWindow()
         {
             InitializeComponent();
-
-            //division grid to rows and cols
-            for (int i = 0; i < engine.BoardWidth; i++)
-                boardGrid.ColumnDefinitions.Add(new ColumnDefinition());
-            for (int j = 0; j < engine.BoardHeight; j++)
-                boardGrid.RowDefinitions.Add(new RowDefinition());
-
-            //creating buttons
-            board = new Button[engine.BoardWidth, engine.BoardHeight];
-            for (int i = 0; i < engine.BoardWidth; i++)
-                for (int j = 0; j < engine.BoardWidth; j++)
-                {
-                    Button button = new Button();
-                    button.Margin = new Thickness(0);
-                    boardGrid.Children.Add(button);
-                    Grid.SetColumn(button, i);
-                    Grid.SetRow(button, j);
-                    button.Tag = new FieldCoordinate { Horizontal = i, Vertical = j };
-                    button.Click += new RoutedEventHandler(ClickingBoardField);
-                    board[i, j] = button;
-                }
-
             AgreeBoardContent();
         }
 
@@ -213,14 +171,80 @@ namespace Reversi
 
         private void MakeTheBestMove()
         {
-            FieldCoordinate? fieldCoordinate = DetermineTheBestMove();
+            FieldCoordinates? fieldCoordinate = DetermineTheBestMove();
             if (fieldCoordinate.HasValue)
             {
-                Button button = board[fieldCoordinate.Value.Horizontal, fieldCoordinate.Value.Vertical];
-                ClickingBoardField(button, null);
+                boardControl_ClickingField(boardControl, new BoardEventArgs() { FieldCoordinates = fieldCoordinate.Value });
             }
         }
 
-       
+        private void MenuItem_NewGameFor1Player_StartingComputer_Click(object sender, RoutedEventArgs e)
+        {
+            _gameAgainstComputer = true;
+            Title = "Reversi - 1 gracz";
+            PrepareBoardToNewGame(2);
+            MakeTheBestMove();
+        }
+
+        private void MenuItem_NewGameFor1Player_Click(object sender, RoutedEventArgs e)
+        {
+            _gameAgainstComputer = true;
+            Title = " Reversi - 1 gracz";
+            PrepareBoardToNewGame(1);
+        }
+
+        private void MenuItem_NewGameFor2Players_Click(object sender, RoutedEventArgs e)
+        {
+            Title = "Reversi - 2 graczy";
+            _gameAgainstComputer = false;
+            PrepareBoardToNewGame(1);
+        }
+
+        private void MenuItem_Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MenuItem_MovePrompt_Click(object sender, RoutedEventArgs e)
+        {
+            MarkTheBestMove();
+        }
+
+        private void MenuItem_MoveMakedByComputer_Click(object sender, RoutedEventArgs e)
+        {
+            MakeTheBestMove();
+        }
+
+        private void MenuItem_GameRules_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("W grze Reversi gracze zajmują na przemian pola planszy, przejmując przy tym wszystkie pola przeciwnika znajdujące się między nowo zajętym polem a innymi polami gracza wykonującego ruch." +
+                "Celem gry jest zdobycie większej liczby pól niż przeciwnik.\n" +
+                "Gracz może zająć jedynie takie pole, które pozwoli mu przejąć przynajmniej jedno pole przeciwnika. Jeżeli takiego pola nie ma, musi oddać rych.\n" +
+                "Gra kończy się w momencie zajęcia wszystkich pól lub gdy żaden z graczy nie może wykonać ruchu.\n",
+                "Reversi - Zasady gry");
+        }
+
+        private void MenuItem_ComputerStrategy_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Komputer kieruje się następującymi priorytetami (od najwyższego):\n" +
+                "1. Ustawić pionek w rogu.\n" +
+                "2. Unikać ustawienia pionka tuż przy rogu.\n" +
+                "3. Ustawić pionek przy krawędzi planszy.\n" +
+                "4. Unikać ustawienia pionka w wierszu lub kolumnie oddalonej o jedno pole od krawędzi planszy.\n" +
+                "5. Wybierać pole, w wyniku którego zdobyta zostanie największa liczba pól przeciwnika.\n",
+                "Reversi - Strategia komputera");
+        }
+
+        private void MenuItem_Website_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("");
+        }
+
+        private void MenuItem_Information_Click(object sender, RoutedEventArgs e)
+        {
+            Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            MessageBox.Show("Reversi Mobile\nwersja " + version.Major.ToString() + "." + version.Minor.ToString() + "." + version.Build.ToString() + "." + version.Revision.ToString() +
+                "\n(C) Roqche 2019", "Reversi - Informacje o programie");
+        }
     }
 }

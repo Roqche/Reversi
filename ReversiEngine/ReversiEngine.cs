@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Reversi
 {
-    public class ReversiEngine
+    public class ReversiEngine : IEngineGameForTwoPlayers
     {
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
@@ -165,14 +161,6 @@ namespace Reversi
                 throw new Exception("Gracz nie może oddać ruchu, jeżeli wykonanie ruchu jest możliwe");
 
             ChangeCurrentPlayer();
-        }
-
-        public enum SituationOnBoard
-        {
-            RuchJestMożliwy,
-            BieżącyGraczNieMożeWykonaćRuchu,
-            ObajGraczeNieMogąWykonaćRuchu,
-            WszystkiePolaPlanszyZajęte
         }
 
         public SituationOnBoard InspectSituationOnBoard()

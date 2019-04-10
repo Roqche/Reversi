@@ -7,12 +7,34 @@
         mc:Ignorable="d"
         Title="Reversi" Height="350" Width="525">
     <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="#AAFFAA">
+            <MenuItem Header="Gra">
+                <MenuItem Header="Nowa gra dla jednego gracza">
+                    <MenuItem Header="Rozpoczyna komputer (brązowy)" Click="MenuItem_NewGameFor1Player_StartingComputer_Click"/>
+                    <MenuItem Header="Rozpoczynasz Ty (zielony)" Click="MenuItem_NewGameFor1Player_Click"/>
+                </MenuItem>
+                <MenuItem Header="Nowa gra dla dwóch graczy" Click="MenuItem_NewGameFor2Players_Click"/>
+                <Separator/>
+                <MenuItem Header="Zamknij" Click="MenuItem_Close_Click"/>
+            </MenuItem>
+            <MenuItem Header="Pomoc">
+                <MenuItem Header="Podpowiedź ruchu" Click="MenuItem_MovePrompt_Click"/>
+                <MenuItem Header="Ruch wykonany przez komputer" Click="MenuItem_MoveMakedByComputer_Click"/>
+                <Separator/>
+                <MenuItem Header="Zasady gry" Click="MenuItem_GameRules_Click"/>
+                <MenuItem Header="Strategia komputera" Click="MenuItem_ComputerStrategy_Click"/>
+                <Separator/>
+                <MenuItem Header="Strona WWW" Click="MenuItem_Website_Click"/>
+                <MenuItem Header="O..." Click="MenuItem_Information_Click"/>
+            </MenuItem>
+        </Menu>
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
             <Grid x:Name="boardGrid" Grid.Column="0" Margin="10,10,10,10" Background="Ivory"/>
+            <local:BoardForTwoPlayers x:Name="boardControl" Grid.Column="0" Margin="10,10,10,10" ColorEmptyField="Ivory" ColorPlayer1="Green" ColorPlayer2="Sienna" ClickingField="boardControl_ClickingField"/>
             <Grid Grid.Column="1" Margin="0,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
